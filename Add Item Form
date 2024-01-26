@@ -1,0 +1,77 @@
+
+Private Sub UserForm_Initialize()
+    'Set up drop-down menu for form
+    With AddItemForm.cboxCategory
+        .AddItem "Shopping"
+        .AddItem "Bills"
+        .AddItem "Income"
+        .AddItem "Entertainment"
+        .AddItem "Other"
+    End With
+End Sub
+
+Private Sub SubmitBtn_Click()
+
+    'Set workbook and sheet
+    Set WB = ThisWorkbook
+    Set ws = WB.Worksheets("Expenses&Incomes")
+
+    'start on second row (headers are first row)
+    intRow = 2
+
+    'Test value of Item textbox
+    If (txtItem.Value <> "") Then
+    
+        'Test value of value textbox
+        If (txtValue.Value <> "") Then
+            'Test value of date textboxes
+            If (txtDay.Value <> "" And txtMonth.Value <> "" And txtYear.Value <> "") Then
+        
+                'Test value of Category combobox
+                If (cboxCategory.Value <> "") Then
+    
+                    'Go through rows, if they contain data, increment
+                    Do While (ws.Cells(intRow, "A") <> "")
+                
+                        'Increment row counter
+                        intRow = intRow + 1
+                    Loop
+                    
+                    'Write date into cell
+                    ws.Cells(intRow, "A") = txtYear.Value + "-" + txtMonth.Value + "-" + txtDay.Value
+                    ws.Cells(intRow, "A").NumberFormat = "yyyy-mm-dd;@" 'Format cell so Excel recognizes a date
+                    
+                    'Write item into cell
+                    ws.Cells(intRow, "B") = txtItem.Value
+                        
+                    'Write value into cell
+                    ws.Cells(intRow, "C") = txtValue.Value
+                    ws.Cells(intRow, "C").NumberFormat = "$#,##0.00" 'Format cell so Excel recognizes a currency
+                    
+                    'Write category into cell
+                    ws.Cells(intRow, "D") = cboxCategory.Value
+                    
+                    'Write description into cell
+                    ws.Cells(intRow, "E") = txtDescription.Value
+                    
+                Else
+                    'Give error for no category
+                    MsgBox ("Please select a category")
+                End If
+        
+            Else
+                'Give error message for no date
+                MsgBox ("Please enter a valid date")
+            End If
+        
+        Else
+            'Give error for no value
+            MsgBox ("Please select a value")
+        End If
+    Else
+        'Give error message for no item
+        MsgBox ("Please enter an item")
+    End If
+    
+End Sub
+
