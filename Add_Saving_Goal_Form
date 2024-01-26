@@ -1,0 +1,71 @@
+
+Private Sub Label10_Click()
+
+End Sub
+
+Private Sub SubmitBtn_Click()
+
+    'Set workbook and sheet
+    Set WB = ThisWorkbook
+    Set ws = WB.Worksheets("Goals")
+
+    'start on second row (headers are first row)
+    intRow = 2
+
+    'Test value of beginning date textboxes
+    If (txtBeginningDay.Value <> "" And txtBeginningMonth.Value <> "" And txtBeginningYear.Value <> "") Then
+        
+        'Test value of expected date textboxes
+        If (txtExpectedDay.Value <> "" And txtExpectedMonth.Value <> "" And txtExpectedYear.Value <> "") Then
+            
+            'Test value of current saving textbox
+            If (txtCurrentSaving.Value <> "") Then
+                
+                'Test value of current saving textbox
+                If (txtCurrentSaving.Value <> "") Then
+                    
+                    'Go through rows, if they contain data, increment
+                    Do While (ws.Cells(intRow, "A") <> "")
+                
+                        'Increment row counter
+                        intRow = intRow + 1
+                
+                    Loop
+                                
+                    'Write beginning date into cell
+                    ws.Cells(intRow, "A") = txtBeginningYear.Value + "-" + txtBeginningMonth.Value + "-" + txtBeginningDay.Value
+                    ws.Cells(intRow, "A").NumberFormat = "yyyy-mm-dd;@" 'Format cell so Excel recognizes a date
+                    
+                    'Write expected date into cell
+                    ws.Cells(intRow, "B") = txtExpectedYear.Value + "-" + txtExpectedMonth.Value + "-" + txtExpectedDay.Value
+                    ws.Cells(intRow, "B").NumberFormat = "yyyy-mm-dd;@" 'Format cell so Excel recognizes a date
+                    
+                    'Write current saving into cell
+                    ws.Cells(intRow, "C") = txtCurrentSaving.Value
+                    ws.Cells(intRow, "C").NumberFormat = "$#,##0.00" 'Format cell so Excel recognizes a currency
+                    
+                    'Write saving goal into cell
+                    ws.Cells(intRow, "D") = txtSavingGoal.Value
+                    ws.Cells(intRow, "D").NumberFormat = "$#,##0.00" 'Format cell so Excel recognizes a currency
+                
+                Else
+                    'Give error for no saving goal
+                    MsgBox ("Please enter your saving goal")
+                End If
+            
+            Else
+                'Give error for no current saving
+                MsgBox ("Please enter your current saving")
+            End If
+        
+        Else
+            'Give error message for no expected date
+            MsgBox ("Please enter a valid expected date")
+        End If
+            
+    Else
+        'Give error message for no beginning date
+        MsgBox ("Please enter a valid beginning date")
+    End If
+        
+End Sub
