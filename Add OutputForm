@@ -1,0 +1,178 @@
+'Global declarations
+
+'Declare an integer to track reading row
+Dim intReadRow As Integer
+
+'Declare an integer to track writing row
+Dim intWriteRow As Integer
+
+Private Sub SubmitBtn_Click()
+    
+    'Set workbook and sheet
+    Set WB = ThisWorkbook
+    Set ws = WB.Worksheets("Output")
+
+    'initialize row counters
+    intReadRow = 2
+    intWriteRow = 2
+ 
+    'Write beginning date into start cell
+    ws.Cells(2, "A") = Worksheets("Goals").Cells(intReadRow, "A")
+    ws.Cells(2, "A").NumberFormat = "yyyy-mm-dd;@" 'Format cell so Excel recognizes a date
+            
+    'Write date into end cell
+    ws.Cells(4, "A") = Worksheets("Goals").Cells(intReadRow, "B")
+    ws.Cells(4, "A").NumberFormat = "yyyy-mm-dd;@" 'Format cell so Excel recognizes a date
+            
+    'Loop down established expenses & incomes searching for matches
+    Do While (Worksheets("Expenses&Incomes").Cells(intReadRow, "A") <> "")
+          
+        'Print to the output sheet
+        ws.Cells(intWriteRow, "E") = Worksheets("Expenses&Incomes").Cells(intReadRow, "A")
+        ws.Cells(intWriteRow, "F") = Worksheets("Expenses&Incomes").Cells(intReadRow, "B")
+        ws.Cells(intWriteRow, "G") = Worksheets("Expenses&Incomes").Cells(intReadRow, "C")
+        ws.Cells(intWriteRow, "H") = Worksheets("Expenses&Incomes").Cells(intReadRow, "D")
+        ws.Cells(intWriteRow, "I") = Worksheets("Expenses&Incomes").Cells(intReadRow, "E")
+                    
+        'Format cell so Excel recognizes a date
+        ws.Cells(intWriteRow, "E").NumberFormat = "yyyy-mm-dd;@"
+        'Format cell so Excel recognizes a currency
+        ws.Cells(intWriteRow, "G").NumberFormat = "$#,##0.00"
+
+        'Increment write row
+        intWriteRow = intWriteRow + 1
+
+        'Increment read row counter
+        intReadRow = intReadRow + 1
+    
+    Loop
+             
+    'find the last row
+    Dim lastRow As Long
+    lastRow = Cells(Rows.Count, 5).End(xlUp).Row 'last row for column 5
+    Dim tableRange As String
+    tableRange = "E1:" + "I" + CStr(lastRow)
+    
+    'sort the table by dates
+    range(tableRange).Sort Key1:=range("E1"), _
+                     Order1:=xlAscending, _
+                     Header:=xlYes
+    
+    'determine saving balance at each date entry
+    Dim savingAtEachDate As String
+    savingAtEachDate = Worksheets("Goals").Cells(2, "C")
+    ws.Cells(2, "B") = savingAtEachDate
+    
+    For rowNum = 2 To lastRow
+        If (ws.Cells(rowNum, "H") = "Income") Then
+            savingAtEachDate = savingAtEachDate + ws.Cells(rowNum, "G")
+        Else
+            savingAtEachDate = savingAtEachDate - ws.Cells(rowNum, "G")
+        End If
+        
+        ws.Cells(rowNum, "J") = savingAtEachDate
+    Next rowNum
+    
+    'graph the line chart to show the trend of saving balance
+    Dim xDataRange As range
+    Dim yDataRange As range
+    Set xDataRange = range("E1:E" + CStr(lastRow))
+    Set yDataRange = range("J1:J" + CStr(lastRow))
+    Call CreateLineChart(xDataRange, yDataRange)
+    
+    'Sum up the amount spent on each category
+    Dim totalShopping As Double
+    Dim totalEntertainment As Double
+    Dim totalBills As Double
+    Dim totalOther As Double
+    Dim total As Double
+    
+    For rowNum = 2 To lastRow
+        total = total + ws.Cells(rowNum, "G")
+        
+        If (ws.Cells(rowNum, "H") = "Shopping") Then
+            totalShopping = totalShopping + ws.Cells(rowNum, "G")
+        End If
+        If (ws.Cells(rowNum, "H") = "Entertainment") Then
+            totalEntertainment = totalEntertainment + ws.Cells(rowNum, "G")
+        End If
+        If (ws.Cells(rowNum, "H") = "Bills") Then
+            totalBills = totalBills + ws.Cells(rowNum, "G")
+        End If
+        If (ws.Cells(rowNum, "H") = "Other") Then
+            totalOther = totalOther + ws.Cells(rowNum, "G")
+        End If
+        
+    Next rowNum
+    
+    'write the data in the worksheet
+    ws.Cells(2, "M") = totalShopping
+    ws.Cells(3, "M") = totalEntertainment
+    ws.Cells(4, "M") = totalBills
+    ws.Cells(5, "M") = totalOther
+    ws.Cells(6, "M") = total
+    
+    ws.Cells(2, "N") = totalShopping / total
+    ws.Cells(2, "N").NumberFormat = "0.00%"
+    ws.Cells(3, "N") = totalEntertainment / total
+    ws.Cells(3, "N").NumberFormat = "0.00%"
+    ws.Cells(4, "N") = totalBills / total
+    ws.Cells(4, "N").NumberFormat = "0.00%"
+    ws.Cells(5, "N") = totalOther / total
+    ws.Cells(5, "N").NumberFormat = "0.00%"
+
+    'call the sub to draw the pie chart
+    Call CreatePieChart
+    
+End Sub
+
+Sub CreateLineChart(xDataRange As range, yDataRange As range)
+    Dim ws As Worksheet
+    Dim chartObj As ChartObject
+
+    'Set the worksheet reference
+    Set ws = ThisWorkbook.Sheets("Output")
+
+    'Add a new chart object to the worksheet
+    Set chartObj = ws.ChartObjects.Add(Left:=100, Width:=375, Top:=75, Height:=225)
+
+    'Set the chart data source for X and Y axes
+    chartObj.Chart.SetSourceData Source:=Union(xDataRange, yDataRange)
+
+    'Set the chart type to Line Chart
+    chartObj.Chart.ChartType = xlLine
+
+    'Set chart title
+    chartObj.Chart.HasTitle = True
+    chartObj.Chart.ChartTitle.Text = "Saving Balance Over Time"
+    
+    'add data labels
+    chartObj.Chart.FullSeriesCollection(1).ApplyDataLabels
+
+End Sub
+
+Sub CreatePieChart()
+    Dim ws As Worksheet
+    Dim chartObj As ChartObject
+
+    ' Set the worksheet reference
+    Set ws = ThisWorkbook.Sheets("Output")
+
+    ' Add a new chart object to the worksheet
+    Set chartObj = ws.ChartObjects.Add(Left:=400, Width:=375, Top:=75, Height:=225)
+
+    ' Set the chart data source
+    chartObj.Chart.SetSourceData Source:=Union(range("L2:L5"), range("N2:N5"))
+
+    ' Set the chart type to Pie Chart
+    chartObj.Chart.ChartType = xlPie
+    
+    ' Add data labels to the series
+    chartObj.Chart.FullSeriesCollection(1).ApplyDataLabels
+
+    ' Set chart title
+    chartObj.Chart.HasTitle = True
+    chartObj.Chart.ChartTitle.Text = "Percentage of Spending on Each Category"
+
+End Sub
+
